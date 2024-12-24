@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видеоплатформа</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar" id="sidebar">
+        <a href="index.html"><img src="icons/home.svg" alt="Главная" class="icon"> Главная</a>
+        <a href="#"><img src="icons/trending.svg" alt="Популярное" class="icon"> Популярное</a>
+        <a href="#"><img src="icons/flash.svg" alt="Трансляции" class="icon"> Трансляции</a>
+        <div class="divider"></div>
+        <a href="history.html"><img src="icons/history.svg" alt="История" class="icon"> История</a>
+        <a href="#"><img src="icons/playlists.svg" alt="Плейлисты" class="icon"> Плейлисты</a>
+        <a href="#"><img src="icons/liked.svg" alt="Понравившиеся" class="icon"> Понравившиеся</a>
+        <div class="divider"></div>
+        <div class="subscription-title">Подписки</div>
+        <a href="#"><img src="icons/channel1.svg" alt="Канал 1" class="icon"> Канал 1</a>
+        <a href="#"><img src="icons/channel2.svg" alt="Канал 2" class="icon"> Канал 2</a>
+        <a href="#"><img src="icons/channel3.svg" alt="Канал 3" class="icon"> Канал 3</a>
+        <a href="#"><img src="icons/channel4.svg" alt="Канал 4" class="icon"> Канал 4</a>
+        <a href="#"><img src="icons/channel5.svg" alt="Канал 5" class="icon"> Канал 5</a>
+        <a href="#"><img src="icons/channel6.svg" alt="Канал 6" class="icon"> Канал 6</a>
+        <div class="divider"></div>
+        <a href="#"><img src="icons/settings.svg" alt="Настройки" class="icon"> Настройки</a>
+        <a href="#"><img src="icons/help.svg" alt="Справка" class="icon"> Справка</a>
+        <a href="#"><img src="icons/feedback.svg" alt="Оставить отзыв" class="icon"> Оставить отзыв</a>
+    </div>
+    <div class="main-content">
+        <div class="auth-buttons">
+            <button onclick="location.href='login.html'">Войти</button>
+            <button onclick="location.href='register.html'">Регистрация</button>
+        </div>
+        <div class="search-bar-container">
+            <input type="text" class="search-bar" placeholder="Введите запрос">
+        </div>
+        <div class="upload-button-container">
+            <input type="file" id="file-input" accept="video/*" style="display: none;" onchange="handleFileSelect(event)">
+            <button onclick="document.getElementById('file-input').click()">Загрузить видео</button>
+        </div>
+        <div class="video-grid">
+            <div class="video-thumbnail" onclick="openVideo('video1.mp4')">
+                <div class="video-image"></div>
+                <div class="video-title">Название видео 1</div>
+            </div>
+            <div class="video-thumbnail" onclick="openVideo('video2.mp4')">
+                <div class="video-image"></div>
+                <div class="video-title">Название видео 2</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function openVideo(videoSrc) {
+            window.location.href = `video.html?src=${videoSrc}`;
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                alert('Видео загружено: ' + file.name);
+            }
+        }
+    </script>
+</body>
+</html>

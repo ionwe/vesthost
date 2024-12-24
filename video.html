@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видеоплатформа - Просмотр видео</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+    <div class="sidebar" id="sidebar">
+        <a href="index.html"><img src="icons/home.svg" alt="Главная" class="icon"> Главная</a>
+        <a href="#"><img src="icons/trending.svg" alt="Популярное" class="icon"> Популярное</a>
+        <a href="#"><img src="icons/flash.svg" alt="Трансляции" class="icon"> Трансляции</a>
+        <div class="divider"></div>
+        <a href="history.html"><img src="icons/history.svg" alt="История" class="icon"> История</a>
+        <a href="#"><img src="icons/playlists.svg" alt="Плейлисты" class="icon"> Плейлисты</a>
+        <a href="#"><img src="icons/liked.svg" alt="Понравившиеся" class="icon"> Понравившиеся</a>
+        <div class="divider"></div>
+        <div class="subscription-title">Подписки</div>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 1" class="icon"> Канал 1</a>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 2" class="icon"> Канал 2</a>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 3" class="icon"> Канал 3</a>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 4" class="icon"> Канал 4</a>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 5" class="icon"> Канал 5</a>
+        <a href="#"><img src="icons/channel.svg" alt="Канал 6" class="icon"> Канал 6</a>
+        <div class="divider"></div>
+        <a href="#"><img src="icons/settings.svg" alt="Настройки" class="icon"> Настройки</a>
+        <a href="#"><img src="icons/help.svg" alt="Справка" class="icon"> Справка</a>
+        <a href="#"><img src="icons/feedback.svg" alt="Оставить отзыв" class="icon"> Оставить отзыв</a>
+    </div>
+    <div class="main-content">
+        <div class="auth-buttons">
+            <button onclick="location.href='login.html'">Войти</button>
+            <button onclick="location.href='register.html'">Регистрация</button>
+        </div>
+        <div class="search-bar-container">
+            <input type="text" class="search-bar" placeholder="Введите запрос">
+        </div>
+        <div class="video-player-container">
+            <video id="videoPlayer" controls>
+                <source src="" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+        </div>
+        <div class="interactions">
+            <button onclick="likeVideo()">👍 <span id="likeCount">0</span></button>
+            <button onclick="dislikeVideo()">👎 <span id="dislikeCount">0</span></button>
+        </div>
+        <div class="comments-section">
+            <h3>Комментарии</h3>
+            <textarea id="commentInput" placeholder="Оставьте комментарий" oninput="autoResizeTextarea()"></textarea>
+            <button onclick="submitComment()">Добавить комментарий</button>
+            <div id="commentsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let likeCount = 0;
+        let dislikeCount = 0;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('hidden');
+            }
+        }
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function likeVideo() {
+            likeCount++;
+            document.getElementById('likeCount').textContent = likeCount;
+        }
+
+        function dislikeVideo() {
+            dislikeCount++;
+            document.getElementById('dislikeCount').textContent = dislikeCount;
+        }
+
+        function autoResizeTextarea() {
+            const textarea = document.getElementById('commentInput');
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function submitComment() {
+            const commentInput = document.getElementById('commentInput');
+            const commentsContainer = document.getElementById('commentsContainer');
+            const commentText = commentInput.value.trim();
+            if (commentText !== '') {
+                const commentDiv = document.createElement('div');
+                commentDiv.className = 'comment';
+                commentDiv.textContent = commentText;
+                commentsContainer.appendChild(commentDiv);
+                commentInput.value = '';
+                autoResizeTextarea();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoSrc = getQueryParam('src');
+            const videoPlayer = document.getElementById('videoPlayer');
+            if (videoSrc) {
+                videoPlayer.src = videoSrc;
+            }
+        });
+    </script>
+</body>
+</html>
