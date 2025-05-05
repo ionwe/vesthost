@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Видеоплатформа - Просмотр видео</title>
+    <title>Просмотр видео</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,98 +18,192 @@
         <a href="#"><img src="icons/liked.svg" alt="Понравившиеся" class="icon"> Понравившиеся</a>
         <div class="divider"></div>
         <div class="subscription-title">Подписки</div>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 1" class="icon"> Канал 1</a>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 2" class="icon"> Канал 2</a>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 3" class="icon"> Канал 3</a>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 4" class="icon"> Канал 4</a>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 5" class="icon"> Канал 5</a>
-        <a href="#"><img src="icons/channel.svg" alt="Канал 6" class="icon"> Канал 6</a>
+        <a href="#"><img src="icons/channel1.svg" alt="Канал 1" class="icon"> Канал 1</a>
+        <a href="#"><img src="icons/channel2.svg" alt="Канал 2" class="icon"> Канал 2</a>
+        <a href="#"><img src="icons/channel3.svg" alt="Канал 3" class="icon"> Канал 3</a>
+        <a href="#"><img src="icons/channel4.svg" alt="Канал 4" class="icon"> Канал 4</a>
+        <a href="#"><img src="icons/channel5.svg" alt="Канал 5" class="icon"> Канал 5</a>
+        <a href="#"><img src="icons/channel6.svg" alt="Канал 6" class="icon"> Канал 6</a>
         <div class="divider"></div>
         <a href="#"><img src="icons/settings.svg" alt="Настройки" class="icon"> Настройки</a>
         <a href="#"><img src="icons/help.svg" alt="Справка" class="icon"> Справка</a>
         <a href="#"><img src="icons/feedback.svg" alt="Оставить отзыв" class="icon"> Оставить отзыв</a>
     </div>
+
     <div class="main-content">
-        <div class="auth-buttons">
-            <button onclick="location.href='login.html'">Войти</button>
-            <button onclick="location.href='register.html'">Регистрация</button>
+        <div class="profile-menu" id="profileMenu" style="position: absolute; top: 20px; right: 20px; display: none; align-items: center; gap: 10px;">
+            <span id="profileName"></span>
+            <img src="icons/profile.svg" alt="Профиль" class="profile-icon" onclick="window.location.href='profile.html'">
+            <button onclick="logout()" class="logout-btn">Выйти</button>
         </div>
-        <div class="search-bar-container">
-            <input type="text" class="search-bar" placeholder="Введите запрос">
+        <div class="auth-buttons" id="authButtons">
+            <button onclick="window.location.href='login.html'">Войти</button>
+            <button onclick="window.location.href='register.html'">Регистрация</button>
         </div>
-        <div class="video-player-container">
+
+        <div class="video-container">
             <video id="videoPlayer" controls>
                 <source src="" type="video/mp4">
                 Ваш браузер не поддерживает видео.
             </video>
-        </div>
-        <div class="interactions">
-            <button onclick="likeVideo()">👍 <span id="likeCount">0</span></button>
-            <button onclick="dislikeVideo()">👎 <span id="dislikeCount">0</span></button>
-        </div>
-        <div class="comments-section">
-            <h3>Комментарии</h3>
-            <textarea id="commentInput" placeholder="Оставьте комментарий" oninput="autoResizeTextarea()"></textarea>
-            <button onclick="submitComment()">Добавить комментарий</button>
-            <div id="commentsContainer"></div>
+            <h1 id="videoTitle" class="video-title-main"></h1>
+            <div class="video-info">
+                <div class="video-actions">
+                    <div class="like-dislike-group">
+                        <button onclick="likeVideo()" id="likeButton">👍 <span id="likeCount">0</span></button>
+                        <button onclick="dislikeVideo()" id="dislikeButton">👎 <span id="dislikeCount">0</span></button>
+                    </div>
+                    <div class="share-btn-container">
+                        <button onclick="shareVideo()">Поделиться</button>
+                    </div>
+                </div>
+            </div>
+            <div class="comments-section">
+                <h2>Комментарии</h2>
+                <div class="comment-form">
+                    <textarea id="commentInput" placeholder="Добавить комментарий..." oninput="autoResizeTextarea(this)"></textarea>
+                    <button onclick="submitComment()">Отправить</button>
+                </div>
+                <div id="commentsList"></div>
+            </div>
         </div>
     </div>
 
+    <script src="js/notifications.js"></script>
+    <script src="js/auth.js"></script>
     <script>
-        let likeCount = 0;
-        let dislikeCount = 0;
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            if (sidebar.classList.contains('hidden')) {
-                sidebar.classList.remove('hidden');
-            } else {
-                sidebar.classList.add('hidden');
+        let currentVideoId = new URLSearchParams(window.location.search).get('id');
+        
+        async function loadVideo() {
+            try {
+                const response = await fetch(`/api/video/${currentVideoId}`);
+                const video = await response.json();
+                document.getElementById('videoPlayer').src = video.file_path;
+                document.getElementById('videoTitle').textContent = video.title;
+                updateLikeDislikeCounts();
+                fetchComments();
+            } catch (error) {
+                notifications.show('Ошибка при загрузке видео', 'error');
             }
         }
 
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
         }
 
-        function likeVideo() {
-            likeCount++;
-            document.getElementById('likeCount').textContent = likeCount;
+        async function likeVideo() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                notifications.show('Войдите в аккаунт, чтобы поставить лайк', 'error');
+                return;
+            }
+            try {
+                await fetch('/api/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video_id: currentVideoId, user_id: userId })
+                });
+                notifications.show('Лайк успешно поставлен', 'success');
+                updateLikeDislikeCounts();
+            } catch (error) {
+                notifications.show('Ошибка при установке лайка', 'error');
+            }
         }
 
-        function dislikeVideo() {
-            dislikeCount++;
-            document.getElementById('dislikeCount').textContent = dislikeCount;
+        async function dislikeVideo() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                notifications.show('Войдите в аккаунт, чтобы поставить дизлайк', 'error');
+                return;
+            }
+            try {
+                await fetch('/api/dislike', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video_id: currentVideoId, user_id: userId })
+                });
+                notifications.show('Дизлайк успешно поставлен', 'success');
+                updateLikeDislikeCounts();
+            } catch (error) {
+                notifications.show('Ошибка при установке дизлайка', 'error');
+            }
         }
 
-        function autoResizeTextarea() {
-            const textarea = document.getElementById('commentInput');
+        async function updateLikeDislikeCounts() {
+            try {
+                const likesResponse = await fetch(`/api/likes/${currentVideoId}`);
+                const dislikesResponse = await fetch(`/api/dislikes/${currentVideoId}`);
+                const likes = await likesResponse.json();
+                const dislikes = await dislikesResponse.json();
+                document.getElementById('likeCount').textContent = likes.count;
+                document.getElementById('dislikeCount').textContent = dislikes.count;
+            } catch (error) {
+                notifications.show('Ошибка при обновлении счетчиков', 'error');
+            }
+        }
+
+        async function submitComment() {
+            const userId = localStorage.getItem('userId');
+            const commentInput = document.getElementById('commentInput');
+            const commentText = commentInput.value.trim();
+            if (commentText !== '' && userId) {
+                try {
+                    await fetch('/api/comment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ video_id: currentVideoId, user_id: userId, comment: commentText })
+                    });
+                    commentInput.value = '';
+                    autoResizeTextarea(commentInput);
+                    notifications.show('Комментарий успешно добавлен', 'success');
+                    fetchComments();
+                } catch (error) {
+                    notifications.show('Ошибка при добавлении комментария', 'error');
+                }
+            } else {
+                notifications.show('Войдите в аккаунт, чтобы оставить комментарий', 'error');
+            }
+        }
+
+        async function fetchComments() {
+            try {
+                const response = await fetch(`/api/comments/${currentVideoId}`);
+                const comments = await response.json();
+                const commentsList = document.getElementById('commentsList');
+                commentsList.innerHTML = '';
+                comments.forEach(comment => {
+                    const div = document.createElement('div');
+                    div.className = 'comment';
+                    div.innerHTML = `
+                        <div class="comment-header">
+                            <span class="comment-author">${comment.username}</span>
+                            <span class="comment-date">${new Date(comment.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="comment-text">${comment.comment}</div>
+                    `;
+                    commentsList.appendChild(div);
+                });
+            } catch (error) {
+                notifications.show('Ошибка при загрузке комментариев', 'error');
+            }
+        }
+
+        function autoResizeTextarea(textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = textarea.scrollHeight + 'px';
         }
 
-        function submitComment() {
-            const commentInput = document.getElementById('commentInput');
-            const commentsContainer = document.getElementById('commentsContainer');
-            const commentText = commentInput.value.trim();
-            if (commentText !== '') {
-                const commentDiv = document.createElement('div');
-                commentDiv.className = 'comment';
-                commentDiv.textContent = commentText;
-                commentsContainer.appendChild(commentDiv);
-                commentInput.value = '';
-                autoResizeTextarea();
-            }
+        function shareVideo() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                notifications.show('Ссылка скопирована в буфер обмена', 'success');
+            }).catch(() => {
+                notifications.show('Ошибка при копировании ссылки', 'error');
+            });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoSrc = getQueryParam('src');
-            const videoPlayer = document.getElementById('videoPlayer');
-            if (videoSrc) {
-                videoPlayer.src = videoSrc;
-            }
-        });
+        loadVideo();
     </script>
 </body>
 </html>

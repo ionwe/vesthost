@@ -3,17 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация</title>
+    <title>Вход</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Авторизация</h1>
-    <form id="login-form">
-        <input type="text" id="username" placeholder="Логин" required>
-        <input type="password" id="password" placeholder="Пароль" required>
-        <button type="submit">Войти</button>
-    </form>
-    <p>Нет аккаунта? <a href="register.html">Зарегистрируйтесь</a></p>
-    <script src="script.js"></script>
+    <div class="auth-container">
+        <h2 class="login-title">Авторизация</h2>
+        <form class="auth-form" id="loginForm">
+            <input type="text" placeholder="Логин или email" required id="loginInput">
+            <input type="password" placeholder="Пароль" required>
+            <button type="submit" class="green-btn">Войти</button>
+            <div class="auth-links">
+                <span>Нет аккаунта?</span>
+            </div>
+            <button type="button" class="green-btn" onclick="window.location.href='register.html'">Зарегистрироваться</button>
+        </form>
+    </div>
+    <script>
+        if (localStorage.getItem('isAuth')) {
+        }
+        document.getElementById('loginForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginInput').value;
+            const password = document.querySelector('input[type=password]').value;
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('isAuth', 'true');
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('userId', data.userId);
+                try {
+                    const userRes = await fetch(`/api/user/${data.userId}`);
+                    if (userRes.ok) {
+                        const user = await userRes.json();
+                        localStorage.setItem('userData', JSON.stringify(user));
+                    }
+                } catch (e) {}
+                window.location.href = 'index.html';
+            } else {
+                alert('Ошибка входа: неверный логин или пароль');
+            }
+        };
+    </script>
 </body>
 </html>

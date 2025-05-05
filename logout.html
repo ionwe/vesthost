@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выход</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <h2>Выход</h2>
+        <p>Вы уверены, что хотите выйти?</p>
+        <button class="green-btn" onclick="logout()">Выйти</button>
+        <button onclick="window.location.href='index.html'">Отмена</button>
+    </div>
+    <script>
+        function logout() {
+            localStorage.removeItem('isAuth');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html> 

@@ -30,43 +30,108 @@
         <a href="#"><img src="icons/feedback.svg" alt="Оставить отзыв" class="icon"> Оставить отзыв</a>
     </div>
     <div class="main-content">
-        <div class="auth-buttons">
-            <button onclick="location.href='login.html'">Войти</button>
-            <button onclick="location.href='register.html'">Регистрация</button>
+        <div class="profile-menu" id="profileMenu" style="position: absolute; top: 20px; right: 20px; display: none; align-items: center; gap: 10px;">
+            <span id="profileName"></span>
+            <img src="icons/profile.svg" alt="Профиль" class="profile-icon" onclick="window.location.href='profile.html'">
+            <button onclick="logout()" class="logout-btn">Выйти</button>
+        </div>
+        <div class="auth-buttons" id="authButtons">
+            <button onclick="window.location.href='login.html'">Войти</button>
+            <button onclick="window.location.href='register.html'">Регистрация</button>
         </div>
         <div class="search-bar-container">
             <input type="text" class="search-bar" placeholder="Введите запрос">
         </div>
-        <div class="upload-button-container">
-            <input type="file" id="file-input" accept="video/*" style="display: none;" onchange="handleFileSelect(event)">
-            <button onclick="document.getElementById('file-input').click()">Загрузить видео</button>
-        </div>
-        <div class="video-grid">
-            <div class="video-thumbnail" onclick="openVideo('video1.mp4')">
-                <div class="video-image"></div>
-                <div class="video-title">Название видео 1</div>
-            </div>
-            <div class="video-thumbnail" onclick="openVideo('video2.mp4')">
-                <div class="video-image"></div>
-                <div class="video-title">Название видео 2</div>
-            </div>
-        </div>
+        
+        <div class="video-grid" id="videoGrid"></div>
     </div>
 
+    <script src="js/notifications.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/admin-panel.js"></script>
     <script>
+        checkAuth();
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('hidden');
         }
 
-        function openVideo(videoSrc) {
-            window.location.href = `video.html?src=${videoSrc}`;
+        function openVideo(videoId) {
+            window.location.href = `video.html?id=${videoId}`;
         }
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                alert('Видео загружено: ' + file.name);
+                notifications.show('Видео успешно загружено: ' + file.name, 'success');
+            }
+        }
+
+        async function fetchVideos() {
+            try {
+                const response = await fetch('/api/videos');
+                const videos = await response.json();
+                const grid = document.getElementById('videoGrid');
+                grid.innerHTML = '';
+                videos.forEach(video => {
+                    const div = document.createElement('div');
+                    div.className = 'video-thumbnail';
+                    div.onclick = () => openVideo(video.id);
+                    div.innerHTML = `
+                        <div class="video-image" style="background-image:url('${video.preview_path || ''}'); background-color:#ccc;"></div>
+                        <div class="video-title">${video.title}</div>
+                    `;
+                    grid.appendChild(div);
+                });
+            } catch (error) {
+                notifications.show('Ошибка при загрузке видео', 'error');
+            }
+        }
+        setInterval(fetchVideos, 1000);
+        fetchVideos();
+
+        let currentUserId = localStorage.getItem('userId');
+
+        async function likeVideo() {
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                notifications.show('Войдите в аккаунт, чтобы поставить лайк', 'error');
+                return;
+            }
+            try {
+                await fetch('/api/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ video_id: currentVideoId, user_id: userId })
+                });
+                notifications.show('Лайк успешно поставлен', 'success');
+                updateLikeDislikeCounts();
+            } catch (error) {
+                notifications.show('Ошибка при установке лайка', 'error');
+            }
+        }
+
+        async function submitComment() {
+            const userId = localStorage.getItem('userId');
+            const commentInput = document.getElementById('commentInput');
+            const commentText = commentInput.value.trim();
+            if (commentText !== '' && userId) {
+                try {
+                    await fetch('/api/comment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ video_id: currentVideoId, user_id: userId, comment: commentText })
+                    });
+                    commentInput.value = '';
+                    autoResizeTextarea(commentInput);
+                    notifications.show('Комментарий успешно добавлен', 'success');
+                    fetchComments();
+                } catch (error) {
+                    notifications.show('Ошибка при добавлении комментария', 'error');
+                }
+            } else {
+                notifications.show('Войдите в аккаунт, чтобы оставить комментарий', 'error');
             }
         }
     </script>
