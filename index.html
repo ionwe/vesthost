@@ -70,7 +70,8 @@
 
         async function fetchVideos() {
             try {
-                const response = await fetch('/api/videos');
+                const userId = localStorage.getItem('userId');
+                const response = await fetch(`/api/videos?userId=${userId}`);
                 const videos = await response.json();
                 const grid = document.getElementById('videoGrid');
                 grid.innerHTML = '';

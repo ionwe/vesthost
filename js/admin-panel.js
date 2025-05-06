@@ -1,4 +1,3 @@
-
 async function checkAndShowAdminPanel() {
     try {
         const userId = localStorage.getItem('userId');
@@ -121,7 +120,8 @@ window.updateUserName = async function(id, username) {
 
 async function loadVideosList() {
     try {
-        const response = await fetch('/api/videos');
+        const userId = localStorage.getItem('userId');
+        const response = await fetch(`/api/videos?userId=${userId}`);
         const videos = await response.json();
         
         const videosListContainer = document.getElementById('videosList');
@@ -134,13 +134,13 @@ async function loadVideosList() {
                     <div class="video-item" data-video-id="${video.id}">
                         <div class="video-info">
                             <span class="video-title">${video.title}</span>
-                            <span class="video-status ${video.restricted ? 'restricted' : ''}">
-                                ${video.restricted ? 'Ограничено' : 'Доступно'}
+                            <span class="video-status ${video.is_private ? 'restricted' : ''}">
+                                ${video.is_private ? 'Ограничено' : 'Доступно'}
                             </span>
                         </div>
                         <div class="video-actions">
-                            <button onclick="toggleVideoRestriction(${video.id}, ${!video.restricted})">
-                                ${video.restricted ? 'Снять ограничение' : 'Ограничить'}
+                            <button onclick="toggleVideoRestriction(${video.id}, ${!video.is_private})">
+                                ${video.is_private ? 'Снять ограничение' : 'Ограничить'}
                             </button>
                             <button onclick="deleteVideo(${video.id})">Удалить</button>
                         </div>

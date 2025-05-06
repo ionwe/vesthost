@@ -11,7 +11,7 @@ const pool = new Pool({
     user: 'postgres', 
     host: 'localhost',
     database: 'vestvideo',
-    password: '178745', 
+    password: 'steamnoname', 
     port: 5432,
 });
 
@@ -58,7 +58,26 @@ app.post('/api/upload', upload.fields([
 
 
 app.get('/api/videos', async (req, res) => {
-    const result = await pool.query('SELECT * FROM videos ORDER BY upload_date DESC');
+    const userId = req.query.userId;
+    let query = 'SELECT * FROM videos';
+    let params = [];
+
+    if (userId) {
+        // Проверяем роль пользователя
+        const userResult = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length > 0 && userResult.rows[0].role === 'admin') {
+            // Администратор видит все видео
+            query += ' ORDER BY upload_date DESC';
+        } else {
+            // Обычные пользователи видят только неограниченные видео
+            query += ' WHERE is_private = false ORDER BY upload_date DESC';
+        }
+    } else {
+        // Если userId не указан, показываем только неограниченные видео
+        query += ' WHERE is_private = false ORDER BY upload_date DESC';
+    }
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
 });
 
@@ -206,6 +225,54 @@ app.post('/api/users/:id/username', async (req, res) => {
     const { username } = req.body;
     await pool.query('UPDATE users SET username = $1 WHERE id = $2', [username, id]);
     res.json({ success: true });
+});
+
+app.delete('/api/videos/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      
+        const videoResult = await pool.query('SELECT file_path, preview_path FROM videos WHERE id = $1', [id]);
+        if (videoResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Видео не найдено' });
+        }
+
+        const video = videoResult.rows[0];
+
+       
+        if (video.file_path) {
+            const videoPath = path.join(__dirname, video.file_path);
+            if (fs.existsSync(videoPath)) {
+                fs.unlinkSync(videoPath);
+            }
+        }
+        if (video.preview_path) {
+            const previewPath = path.join(__dirname, video.preview_path);
+            if (fs.existsSync(previewPath)) {
+                fs.unlinkSync(previewPath);
+            }
+        }
+
+     
+        await pool.query('DELETE FROM videos WHERE id = $1', [id]);
+        
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка при удалении видео:', error);
+        res.status(500).json({ error: 'Ошибка при удалении видео' });
+    }
+});
+
+app.post('/api/videos/:id/restrict', async (req, res) => {
+    const { id } = req.params;
+    const { restricted } = req.body;
+    
+    try {
+        await pool.query('UPDATE videos SET is_private = $1 WHERE id = $2', [restricted, id]);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Ошибка при изменении статуса видео:', error);
+        res.status(500).json({ error: 'Ошибка при изменении статуса видео' });
+    }
 });
 
 app.listen(PORT, () => {
